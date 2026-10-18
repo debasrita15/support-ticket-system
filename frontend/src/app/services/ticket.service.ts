@@ -2,13 +2,14 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CreateTicketRequest, Ticket, TicketStatus, UpdateTicketStatusRequest } from '../models/ticket.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TicketService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:8080/api/tickets';
+  private readonly apiUrl = `${environment.apiUrl}/tickets`;
 
   // Get tickets created by the logged-in user
   getMyTickets(): Observable<Ticket[]> {
