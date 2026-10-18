@@ -1,0 +1,266 @@
+<div class="detail-wrapper">
+  <!-- Breadcrumb Navigation -->
+  <nav class="breadcrumb-nav" aria-label="Breadcrumb">
+    <div class="breadcrumb-left">
+      <a routerLink="/tickets" class="breadcrumb-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+        Back to My Tickets
+      </a>
+      <span class="breadcrumb-separator">/</span>
+      <span class="breadcrumb-current" *ngIf="ticket">Ticket #{{ ticket.id }}</span>
+    </div>
+    <a *ngIf="authService.isAdmin()" routerLink="/admin" class="btn-admin-view">
+      🛡️ Admin Panel
+    </a>
+  </nav>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="card loading-card">
+    <div class="spinner"></div>
+    <p class="loading-text">Loading ticket details...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="errorMessage" class="alert-error" role="alert">
+    <div class="alert-message">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <span>{{ errorMessage }}</span>
+    </div>
+    <a routerLink="/tickets" class="btn btn-outline btn-sm">Return to Tickets</a>
+  </div>
+
+  <!-- Main Ticket View -->
+  <div class="ticket-view" *ngIf="!isLoading && ticket">
+    <!-- Ticket Title Header Card -->
+    <div class="card header-card">
+      <div class="header-card-top">
+        <div class="header-tags">
+          <span class="ticket-id-tag">#{{ ticket.id }}</span>
+          <span class="badge" [ngClass]="'status-' + ticket.status.toLowerCase()">
+            {{ ticket.status === 'IN_PROGRESS' ? 'In Progress' : ticket.status }}
+          </span>
+          <span class="badge" [ngClass]="'priority-' + ticket.priority.toLowerCase()">
+            {{ ticket.priority }} Priority
+          </span>
+          <span class="badge badge-category" *ngIf="ticket.category">
+            🤖 {{ ticket.category }}
+          </span>
+        </div>
+        <span class="created-timestamp">
+          Opened {{ ticket.createdAt | date:'medium' }}
+        </span>
+      </div>
+
+      <h1 class="ticket-title">{{ ticket.title }}</h1>
+    </div>
+
+    <!-- 2-Column Grid Layout -->
+    <div class="detail-grid">
+      <!-- Left Column: Conversation Thread (2/3 width) -->
+      <div class="conversation-column">
+        <div class="conversation-thread">
+          <!-- Opening Message (Original Issue Description) -->
+          <div class="message-card card">
+            <div class="message-header">
+              <div class="message-author-info">
+                <div class="author-avatar user-avatar">
+                  {{ (ticket.createdByName || 'U')[0] }}
+                </div>
+                <div>
+                  <div class="author-name-row">
+                    <span class="author-name">{{ ticket.createdByName }}</span>
+                    <span class="author-chip op-chip">Author</span>
+                  </div>
+                  <span class="message-time">{{ ticket.createdAt | date:'medium' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="message-body">
+              <p class="description-text">{{ ticket.description }}</p>
+            </div>
+          </div>
+
+          <!-- Dynamic Replies List -->
+          <div
+            *ngFor="let reply of replies"
+            class="message-card card reply-card"
+            [class.admin-reply-card]="reply.role === 'ADMIN'"
+          >
+            <div class="message-header">
+              <div class="message-author-info">
+                <div
+                  class="author-avatar"
+                  [class.admin-avatar]="reply.role === 'ADMIN'"
+                  [class.user-avatar]="reply.role !== 'ADMIN'"
+                >
+                  {{ reply.authorName[0] }}
+                </div>
+                <div>
+                  <div class="author-name-row">
+                    <span class="author-name">{{ reply.authorName }}</span>
+                    <span
+                      class="author-chip"
+                      [class.admin-chip]="reply.role === 'ADMIN'"
+                    >
+                      {{ reply.role === 'ADMIN' ? 'Support Agent' : 'User' }}
+                    </span>
+                  </div>
+                  <span class="message-time">{{ reply.createdAt | date:'shortTime' }} (Just now)</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="message-body">
+              <p class="reply-content-text">{{ reply.content }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add Reply Form -->
+        <div class="card add-reply-card">
+          <h2 class="reply-section-title">Leave a Response</h2>
+          <div class="reply-textarea-wrapper">
+            <textarea
+              [(ngModel)]="replyText"
+              rows="4"
+              placeholder="Write your reply or update here..."
+              aria-label="Write a reply"
+            ></textarea>
+          </div>
+          <div class="reply-actions-row">
+            <span class="reply-hint">
+              Plain text responses are appended directly to this conversation thread.
+            </span>
+            <button
+              (click)="sendReply()"
+              [disabled]="!replyText.trim()"
+              class="btn btn-primary btn-send-reply"
+            >
+              Send Reply
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Metadata & AI Insights Card (1/3 width) -->
+      <div class="sidebar-column">
+        <!-- AI Recommended Solution Card -->
+        <div class="card ai-solution-card" *ngIf="ticket.suggestedReply">
+          <div class="ai-solution-header">
+            <div class="ai-badge-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"/>
+                <rect x="4" y="8" width="16" height="12" rx="3"/>
+                <circle cx="9" cy="14" r="1"/>
+                <circle cx="15" cy="14" r="1"/>
+              </svg>
+            </div>
+            <div>
+              <strong class="ai-card-title">AI Suggested Solution</strong>
+              <span class="ai-card-subtitle">Groq Qwen Engine</span>
+            </div>
+          </div>
+
+          <div class="ai-solution-body">
+            <pre class="ai-solution-text">{{ ticket.suggestedReply }}</pre>
+          </div>
+
+          <div class="ai-solution-footer">
+            <button (click)="copySuggestedReply()" class="btn btn-outline btn-sm btn-ai-action">
+              {{ isCopied ? '✓ Copied' : '📋 Copy' }}
+            </button>
+            <button (click)="useSuggestedReply()" class="btn btn-primary btn-sm btn-ai-action">
+              ✍️ Use in Reply
+            </button>
+          </div>
+        </div>
+
+        <!-- Ticket Metadata Card -->
+        <div class="card metadata-card">
+          <h2 class="sidebar-section-title">Ticket Information</h2>
+
+          <!-- Admin Status Control (If Admin) -->
+          <div *ngIf="authService.isAdmin()" class="admin-control-box">
+            <div class="admin-control-top">
+              <span class="control-label">Status Override</span>
+              <span *ngIf="isUpdatingStatus" class="saving-text">Saving...</span>
+              <span *ngIf="statusSuccess" class="success-text">✓ Updated</span>
+            </div>
+            <select
+              [ngModel]="ticket.status"
+              (change)="onAdminStatusChange($event)"
+              [disabled]="isUpdatingStatus"
+              class="admin-status-dropdown"
+              aria-label="Change ticket status"
+            >
+              <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
+            </select>
+          </div>
+
+          <!-- Metadata Properties List -->
+          <dl class="meta-list">
+            <div class="meta-item">
+              <dt>Status</dt>
+              <dd>
+                <span class="badge" [ngClass]="'status-' + ticket.status.toLowerCase()">
+                  {{ ticket.status === 'IN_PROGRESS' ? 'In Progress' : ticket.status }}
+                </span>
+              </dd>
+            </div>
+
+            <div class="meta-item">
+              <dt>Priority</dt>
+              <dd>
+                <span class="badge" [ngClass]="'priority-' + ticket.priority.toLowerCase()">
+                  {{ ticket.priority }}
+                </span>
+              </dd>
+            </div>
+
+            <div class="meta-item">
+              <dt>AI Category</dt>
+              <dd>
+                <span class="badge badge-category" *ngIf="ticket.category">
+                  🤖 {{ ticket.category }}
+                </span>
+                <span *ngIf="!ticket.category" class="text-muted">—</span>
+              </dd>
+            </div>
+
+            <div class="meta-item">
+              <dt>Created By</dt>
+              <dd class="user-meta-dd">
+                <div class="meta-user-row">
+                  <div class="user-meta-avatar">
+                    {{ (ticket.createdByName || 'U')[0] }}
+                  </div>
+                  <div>
+                    <span class="meta-user-name">{{ ticket.createdByName }}</span>
+                    <span class="meta-user-email">{{ ticket.createdByEmail }}</span>
+                  </div>
+                </div>
+              </dd>
+            </div>
+
+            <div class="meta-item">
+              <dt>Created</dt>
+              <dd class="meta-date">{{ ticket.createdAt | date:'mediumDate' }}</dd>
+            </div>
+
+            <div class="meta-item">
+              <dt>Last Activity</dt>
+              <dd class="meta-date">{{ (ticket.updatedAt || ticket.createdAt) | date:'mediumDate' }}</dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,97 @@
+<header class="navbar-wrapper">
+  <div class="navbar-container">
+    <!-- Brand Logo & Name -->
+    <a routerLink="/" class="brand-link" (click)="closeMobileMenu()">
+      <div class="brand-logo-badge">
+        <svg class="ticket-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
+          <path d="M13 5v2"/>
+          <path d="M13 17v2"/>
+          <path d="M13 11v2"/>
+        </svg>
+      </div>
+      <span class="brand-title">Support Ticket</span>
+    </a>
+
+    <!-- Desktop Nav Links & Actions -->
+    <nav class="desktop-nav">
+      <ng-container *ngIf="authService.currentUser() as user; else guestNav">
+        <a routerLink="/dashboard" routerLinkActive="active" class="nav-link">Dashboard</a>
+        <a routerLink="/tickets" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-link">My Tickets</a>
+        <a *ngIf="authService.isAdmin()" routerLink="/admin" routerLinkActive="active" class="nav-link nav-link-admin">
+          🛡️ Admin Portal
+        </a>
+
+        <!-- Gradient + New Ticket Button -->
+        <a routerLink="/tickets/new" class="btn-new-ticket">
+          <span class="plus-sign">+</span> New Ticket
+        </a>
+
+        <!-- User Chip with Avatar Initial -->
+        <div class="user-chip">
+          <div class="user-avatar" [class.admin-avatar]="user.role === 'ADMIN'">
+            {{ user.name ? user.name[0] : 'U' }}
+          </div>
+          <div class="user-details">
+            <span class="user-name">{{ user.name }}</span>
+            <span class="user-role" [class.admin-role]="user.role === 'ADMIN'">{{ user.role }}</span>
+          </div>
+        </div>
+
+        <!-- Outlined Logout Button -->
+        <button (click)="onLogout()" class="btn-logout" aria-label="Log Out">
+          Logout
+        </button>
+      </ng-container>
+
+      <ng-template #guestNav>
+        <a routerLink="/login" routerLinkActive="active" class="nav-link">Login</a>
+        <a routerLink="/register" class="btn-register">Get Started</a>
+      </ng-template>
+    </nav>
+
+    <!-- Mobile Hamburger Button -->
+    <button
+      class="mobile-toggle"
+      (click)="toggleMobileMenu()"
+      [attr.aria-expanded]="isMobileMenuOpen"
+      aria-label="Toggle navigation menu"
+    >
+      <span class="bar" [class.open]="isMobileMenuOpen"></span>
+      <span class="bar" [class.open]="isMobileMenuOpen"></span>
+      <span class="bar" [class.open]="isMobileMenuOpen"></span>
+    </button>
+  </div>
+
+  <!-- Mobile Collapsible Menu -->
+  <div class="mobile-menu" *ngIf="isMobileMenuOpen">
+    <ng-container *ngIf="authService.currentUser() as user; else mobileGuestNav">
+      <!-- Mobile User Header -->
+      <div class="mobile-user-card">
+        <div class="user-avatar" [class.admin-avatar]="user.role === 'ADMIN'">
+          {{ user.name ? user.name[0] : 'U' }}
+        </div>
+        <div>
+          <div class="mobile-user-name">{{ user.name }}</div>
+          <span class="user-role" [class.admin-role]="user.role === 'ADMIN'">{{ user.role }}</span>
+        </div>
+      </div>
+
+      <a routerLink="/dashboard" routerLinkActive="active" class="mobile-link" (click)="closeMobileMenu()">Dashboard</a>
+      <a routerLink="/tickets" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="mobile-link" (click)="closeMobileMenu()">My Tickets</a>
+      <a *ngIf="authService.isAdmin()" routerLink="/admin" routerLinkActive="active" class="mobile-link mobile-link-admin" (click)="closeMobileMenu()">
+        🛡️ Admin Portal
+      </a>
+      <a routerLink="/tickets/new" class="mobile-link-action" (click)="closeMobileMenu()">+ New Ticket</a>
+
+      <button (click)="onLogout()" class="mobile-logout-btn">
+        Logout
+      </button>
+    </ng-container>
+
+    <ng-template #mobileGuestNav>
+      <a routerLink="/login" routerLinkActive="active" class="mobile-link" (click)="closeMobileMenu()">Login</a>
+      <a routerLink="/register" class="mobile-link-action" (click)="closeMobileMenu()">Get Started</a>
+    </ng-template>
+  </div>
+</header>

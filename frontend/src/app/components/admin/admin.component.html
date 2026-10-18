@@ -1,0 +1,271 @@
+<div class="admin-wrapper">
+  <!-- Breadcrumb / Header Row -->
+  <div class="admin-header-row">
+    <div>
+      <div class="admin-shield-badge">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        <span>Administrator Portal</span>
+      </div>
+      <h1 class="admin-title">System Overview &amp; Triage</h1>
+      <p class="admin-subtitle">Monitor, reassign, and manage all support tickets submitted across the platform.</p>
+    </div>
+
+    <button (click)="loadAllTickets()" [disabled]="isLoading" class="btn btn-outline btn-refresh">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="23 4 23 10 17 10"/>
+        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+      </svg>
+      Refresh Feed
+    </button>
+  </div>
+
+  <!-- Quick Stats (4-grid) -->
+  <div class="stats-grid">
+    <div class="stat-card stat-total">
+      <div class="stat-icon-box">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
+          <path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>
+        </svg>
+      </div>
+      <div class="stat-info">
+        <span class="stat-num">{{ tickets.length }}</span>
+        <span class="stat-label">Total Platform Tickets</span>
+      </div>
+    </div>
+
+    <div class="stat-card stat-unresolved">
+      <div class="stat-icon-box">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      </div>
+      <div class="stat-info">
+        <span class="stat-num">{{ unresolvedCount }}</span>
+        <span class="stat-label">Unresolved Issues</span>
+      </div>
+    </div>
+
+    <div class="stat-card stat-urgent">
+      <div class="stat-icon-box">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+        </svg>
+      </div>
+      <div class="stat-info">
+        <span class="stat-num">{{ highPriorityCount }}</span>
+        <span class="stat-label">High Priority / Urgent</span>
+      </div>
+    </div>
+
+    <div class="stat-card stat-users">
+      <div class="stat-icon-box">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      </div>
+      <div class="stat-info">
+        <span class="stat-num">{{ uniqueUsersCount }}</span>
+        <span class="stat-label">Active Users</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Action Banners -->
+  <div *ngIf="successMessage" class="alert-success" role="alert">
+    <span>✓ {{ successMessage }}</span>
+  </div>
+  <div *ngIf="errorMessage" class="alert-error" role="alert">
+    <span>⚠️ {{ errorMessage }}</span>
+  </div>
+
+  <!-- Filter & Search Bar -->
+  <div class="filter-card card" *ngIf="!isLoading && tickets.length > 0">
+    <div class="filter-top-row">
+      <!-- Search Input -->
+      <div class="search-box">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          placeholder="Search by title, ID, submitter name or email..."
+          aria-label="Search all tickets"
+        />
+        <button *ngIf="searchQuery" (click)="searchQuery = ''" class="btn-clear-search" aria-label="Clear search">×</button>
+      </div>
+
+      <!-- Priority Filter Select -->
+      <div class="filter-select-group">
+        <label for="adminPrioritySelect" class="filter-select-label">Priority:</label>
+        <select id="adminPrioritySelect" [(ngModel)]="selectedPriority">
+          <option value="ALL">All Priorities</option>
+          <option value="LOW">Low</option>
+          <option value="MEDIUM">Medium</option>
+          <option value="HIGH">High</option>
+        </select>
+      </div>
+
+      <!-- Category Filter Select -->
+      <div class="filter-select-group">
+        <label for="adminCatSelect" class="filter-select-label">Category:</label>
+        <select id="adminCatSelect" [(ngModel)]="selectedCategory">
+          <option value="ALL">All Categories</option>
+          <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Status Filter Pills -->
+    <div class="status-pills-row">
+      <div class="pills-group">
+        <button
+          class="pill-btn"
+          [class.active]="selectedStatus === 'ALL'"
+          (click)="selectedStatus = 'ALL'"
+        >
+          All <span class="pill-count">{{ tickets.length }}</span>
+        </button>
+        <button
+          class="pill-btn"
+          [class.active]="selectedStatus === 'OPEN'"
+          (click)="selectedStatus = 'OPEN'"
+        >
+          Open <span class="pill-count">{{ openCount }}</span>
+        </button>
+        <button
+          class="pill-btn"
+          [class.active]="selectedStatus === 'IN_PROGRESS'"
+          (click)="selectedStatus = 'IN_PROGRESS'"
+        >
+          In Progress <span class="pill-count">{{ inProgressCount }}</span>
+        </button>
+        <button
+          class="pill-btn"
+          [class.active]="selectedStatus === 'RESOLVED'"
+          (click)="selectedStatus = 'RESOLVED'"
+        >
+          Resolved <span class="pill-count">{{ resolvedCount }}</span>
+        </button>
+      </div>
+
+      <!-- Reset Filters Button -->
+      <button
+        *ngIf="hasActiveFilters"
+        (click)="clearFilters()"
+        class="btn-reset-filters"
+      >
+        Reset Filters
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="card loading-card">
+    <div class="spinner"></div>
+    <p class="loading-text">Loading platform tickets...</p>
+  </div>
+
+  <!-- Empty State (No tickets match filter) -->
+  <div *ngIf="!isLoading && filteredTickets.length === 0" class="card empty-state">
+    <div class="empty-state-icon">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--gray-400)" stroke-width="1.8">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+    </div>
+    <h3>No Tickets Found</h3>
+    <p>No tickets match your active filter or search criteria.</p>
+    <button *ngIf="hasActiveFilters" (click)="clearFilters()" class="btn btn-outline">Clear All Filters</button>
+  </div>
+
+  <!-- Full Platform Tickets Table -->
+  <div class="card table-card" *ngIf="!isLoading && filteredTickets.length > 0">
+    <div class="table-responsive">
+      <table class="tickets-table">
+        <thead>
+          <tr>
+            <th style="width: 70px;">ID</th>
+            <th>Subject &amp; Submitter</th>
+            <th style="width: 130px;">AI Category</th>
+            <th style="width: 110px;">Priority</th>
+            <th style="width: 120px;">Created</th>
+            <th style="width: 170px;">Status / Update</th>
+            <th style="width: 100px; text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let ticket of filteredTickets" class="admin-ticket-row">
+            <td>
+              <span class="ticket-id-tag">#{{ ticket.id }}</span>
+            </td>
+
+            <td class="col-info">
+              <div class="ticket-subject" (click)="openTicket(ticket.id)">
+                {{ ticket.title }}
+              </div>
+              <div class="ticket-user">
+                <span class="user-name">{{ ticket.createdByName }}</span>
+                <span class="user-bullet">&bull;</span>
+                <code class="user-email">{{ ticket.createdByEmail }}</code>
+              </div>
+            </td>
+
+            <td>
+              <span class="badge badge-category" *ngIf="ticket.category">
+                🤖 {{ ticket.category }}
+              </span>
+              <span *ngIf="!ticket.category" class="text-muted">—</span>
+            </td>
+
+            <td>
+              <span class="badge" [ngClass]="'priority-' + ticket.priority.toLowerCase()">
+                {{ ticket.priority }}
+              </span>
+            </td>
+
+            <td class="col-date">
+              {{ ticket.createdAt | date:'shortDate' }}
+            </td>
+
+            <td class="col-status">
+              <div class="status-control">
+                <select
+                  [ngModel]="ticket.status"
+                  (change)="onStatusChange(ticket, $event)"
+                  [disabled]="updatingTicketId === ticket.id"
+                  class="status-select"
+                  [ngClass]="'select-' + ticket.status.toLowerCase()"
+                  aria-label="Update ticket status"
+                >
+                  <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
+                </select>
+                <span *ngIf="updatingTicketId === ticket.id" class="saving-spinner" title="Updating status..."></span>
+              </div>
+            </td>
+
+            <td class="col-action">
+              <a [routerLink]="['/tickets', ticket.id]" class="btn btn-outline btn-sm btn-inspect">
+                Inspect →
+              </a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Table Footer Counter -->
+    <div class="table-footer">
+      <span>Showing <strong>{{ filteredTickets.length }}</strong> of <strong>{{ tickets.length }}</strong> platform tickets</span>
+    </div>
+  </div>
+</div>

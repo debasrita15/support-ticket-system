@@ -1,0 +1,109 @@
+<div class="create-wrapper">
+  <!-- Breadcrumb Navigation -->
+  <nav class="breadcrumb-nav" aria-label="Breadcrumb">
+    <a routerLink="/tickets" class="breadcrumb-link">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      Back to My Tickets
+    </a>
+  </nav>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1 class="page-title">Create Support Ticket</h1>
+    <p class="page-subtitle">Describe your issue and our AI will automatically classify and prioritize it.</p>
+  </div>
+
+  <!-- AI Assistant Info Card -->
+  <div class="ai-info-card">
+    <div class="ai-info-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z"/>
+        <rect x="4" y="8" width="16" height="12" rx="3"/>
+        <circle cx="9" cy="14" r="1"/>
+        <circle cx="15" cy="14" r="1"/>
+      </svg>
+    </div>
+    <div class="ai-info-body">
+      <strong class="ai-info-title">Automated AI Assistance</strong>
+      <p class="ai-info-desc">
+        Our AI model analyzes your ticket in seconds to detect category, assess priority, and suggest a resolution reply.
+      </p>
+    </div>
+  </div>
+
+  <!-- Error Alert Banner -->
+  <div *ngIf="errorMessage" class="alert-error" role="alert">
+    <div class="alert-message">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <span>{{ errorMessage }}</span>
+    </div>
+  </div>
+
+  <!-- AI Processing State Banner -->
+  <div *ngIf="isSubmitting" class="ai-processing-box" role="status">
+    <div class="ai-spinner"></div>
+    <div class="ai-processing-text">
+      <strong>AI Analysis in Progress...</strong>
+      <p>Analyzing description, assigning category and priority score, and drafting instant solution.</p>
+    </div>
+  </div>
+
+  <!-- Form Card -->
+  <div class="card form-card">
+    <form (ngSubmit)="onSubmit()" class="ticket-form" novalidate>
+      <!-- Title Input -->
+      <div class="form-group">
+        <label for="title">
+          <span>Ticket Title / Subject</span>
+          <span class="char-count" [class.char-limit]="title.length > 80">{{ title.length }}/100</span>
+        </label>
+        <input
+          type="text"
+          id="title"
+          name="title"
+          maxlength="100"
+          [(ngModel)]="title"
+          placeholder="e.g. Cannot access payment history in billing section"
+          [disabled]="isSubmitting"
+          required
+        />
+        <span class="field-hint">Summarize the main problem clearly in a single sentence.</span>
+      </div>
+
+      <!-- Description Textarea -->
+      <div class="form-group">
+        <label for="description">
+          <span>Detailed Description</span>
+          <span class="char-count">{{ description.length }} characters</span>
+        </label>
+        <textarea
+          id="description"
+          name="description"
+          rows="6"
+          [(ngModel)]="description"
+          placeholder="Describe what happened, error codes, steps to reproduce, or what you expected..."
+          [disabled]="isSubmitting"
+          required
+        ></textarea>
+        <span class="field-hint">Be as specific as possible so our AI model can evaluate the issue accurately.</span>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="form-actions">
+        <a routerLink="/tickets" class="btn btn-outline" *ngIf="!isSubmitting">
+          Cancel
+        </a>
+        <button type="submit" [disabled]="isSubmitting" class="btn btn-primary btn-submit">
+          <span *ngIf="isSubmitting" class="button-spinner" aria-hidden="true"></span>
+          <span>{{ isSubmitting ? 'Analyzing & Submitting...' : '🚀 Submit Ticket' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,244 @@
+<div class="tickets-wrapper">
+  <!-- Breadcrumb Navigation -->
+  <nav class="breadcrumb-nav" aria-label="Breadcrumb">
+    <a routerLink="/dashboard" class="breadcrumb-link">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      Back to Dashboard
+    </a>
+  </nav>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">My Tickets</h1>
+      <p class="page-subtitle">Track, filter, and inspect your support requests and AI responses.</p>
+    </div>
+    <a routerLink="/tickets/new" class="btn btn-primary btn-header-new">
+      <span>+</span> New Ticket
+    </a>
+  </div>
+
+  <!-- Filter & Search Bar -->
+  <div class="filter-card card" *ngIf="!isLoading && tickets.length > 0">
+    <div class="filter-top-row">
+      <!-- Search Input -->
+      <div class="search-box">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input
+          type="text"
+          [(ngModel)]="searchQuery"
+          placeholder="Search by ticket ID or title..."
+          aria-label="Search tickets"
+        />
+        <button *ngIf="searchQuery" (click)="searchQuery = ''" class="btn-clear-search" aria-label="Clear search">×</button>
+      </div>
+
+      <!-- Priority Filter Select -->
+      <div class="priority-select-box">
+        <label for="priorityFilter" class="priority-label">Priority:</label>
+        <select id="priorityFilter" [(ngModel)]="selectedPriority">
+          <option value="ALL">All Priorities</option>
+          <option value="LOW">Low</option>
+          <option value="MEDIUM">Medium</option>
+          <option value="HIGH">High</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Status Filter Pills -->
+    <div class="status-pills-row">
+      <div class="pills-group">
+        <button
+          class="pill-btn"
+          [class.active]="selectedStatus === 'ALL'"
+          (click)="selectedStatus = 'ALL'"
+        >
+          All <span class="pill-count">{{ tickets.length }}</span>
+        </button>
+        <button
+          class="pill-btn"
+          [class.active]="selectedStatus === 'OPEN'"
+          (click)="selectedStatus = 'OPEN'"
+        >
+          Open <span class="pill-count">{{ openCount }}</span>
+        </button>
+        <button
+          class="pill-btn"
+          [class.active]="selectedStatus === 'IN_PROGRESS'"
+          (click)="selectedStatus = 'IN_PROGRESS'"
+        >
+          In Progress <span class="pill-count">{{ inProgressCount }}</span>
+        </button>
+        <button
+          class="pill-btn"
+          [class.active]="selectedStatus === 'RESOLVED'"
+          (click)="selectedStatus = 'RESOLVED'"
+        >
+          Resolved <span class="pill-count">{{ resolvedCount }}</span>
+        </button>
+      </div>
+
+      <!-- Reset Filters Button -->
+      <button
+        *ngIf="hasActiveFilters"
+        (click)="clearFilters()"
+        class="btn-reset-filters"
+      >
+        Reset Filters
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="card loading-card">
+    <div class="spinner"></div>
+    <p class="loading-text">Loading your tickets...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="errorMessage" class="alert-error" role="alert">
+    <div class="alert-message">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <span>{{ errorMessage }}</span>
+    </div>
+    <button (click)="loadTickets()" class="btn-retry">Retry</button>
+  </div>
+
+  <!-- Empty State (No tickets in database at all) -->
+  <div *ngIf="!isLoading && tickets.length === 0 && !errorMessage" class="card empty-state">
+    <div class="empty-state-icon">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
+        <path d="M13 5v2"/>
+        <path d="M13 17v2"/>
+        <path d="M13 11v2"/>
+      </svg>
+    </div>
+    <h3>No Support Tickets Yet</h3>
+    <p>Submit your first issue and our automated AI system will classify, prioritize, and suggest an instant reply.</p>
+    <a routerLink="/tickets/new" class="btn btn-primary">+ Create First Ticket</a>
+  </div>
+
+  <!-- Empty Filter State (Tickets exist, but none match current filter) -->
+  <div *ngIf="!isLoading && tickets.length > 0 && filteredTickets.length === 0" class="card empty-state">
+    <div class="empty-state-icon">
+      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--gray-400)" stroke-width="1.8">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+    </div>
+    <h3>No Tickets Found</h3>
+    <p>No tickets match your active search or filters. Try adjusting your search term or filter options.</p>
+    <button (click)="clearFilters()" class="btn btn-outline">Clear All Filters</button>
+  </div>
+
+  <!-- Desktop Table View (screens >= 768px) -->
+  <div class="desktop-table-container card" *ngIf="!isLoading && filteredTickets.length > 0">
+    <table class="tickets-table">
+      <thead>
+        <tr>
+          <th style="width: 80px;">ID</th>
+          <th>Subject</th>
+          <th style="width: 140px;">Category</th>
+          <th style="width: 120px;">Priority</th>
+          <th style="width: 140px;">Status</th>
+          <th style="width: 140px;">Last Updated</th>
+          <th style="width: 40px;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          *ngFor="let ticket of filteredTickets"
+          (click)="openTicket(ticket.id)"
+          class="ticket-row"
+          role="button"
+          tabindex="0"
+          (keydown.enter)="openTicket(ticket.id)"
+        >
+          <td>
+            <span class="ticket-id-tag">#{{ ticket.id }}</span>
+          </td>
+          <td>
+            <div class="subject-cell">
+              <span class="ticket-subject-title">{{ ticket.title }}</span>
+              <span class="ticket-subject-snippet" *ngIf="ticket.description">{{ ticket.description }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="badge badge-category" *ngIf="ticket.category">
+              🤖 {{ ticket.category }}
+            </span>
+            <span *ngIf="!ticket.category" class="no-category">—</span>
+          </td>
+          <td>
+            <span class="badge" [ngClass]="'priority-' + ticket.priority.toLowerCase()">
+              {{ ticket.priority }}
+            </span>
+          </td>
+          <td>
+            <span class="badge" [ngClass]="'status-' + ticket.status.toLowerCase()">
+              {{ ticket.status === 'IN_PROGRESS' ? 'In Progress' : ticket.status }}
+            </span>
+          </td>
+          <td class="ticket-date">
+            {{ (ticket.updatedAt || ticket.createdAt) | date:'mediumDate' }}
+          </td>
+          <td class="ticket-arrow-cell">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Mobile Card List (screens < 768px) -->
+  <div class="mobile-cards-container" *ngIf="!isLoading && filteredTickets.length > 0">
+    <div
+      *ngFor="let ticket of filteredTickets"
+      class="mobile-ticket-card card"
+      (click)="openTicket(ticket.id)"
+      role="button"
+      tabindex="0"
+      (keydown.enter)="openTicket(ticket.id)"
+    >
+      <div class="mobile-card-top">
+        <span class="ticket-id-tag">#{{ ticket.id }}</span>
+        <span class="ticket-date">{{ (ticket.updatedAt || ticket.createdAt) | date:'mediumDate' }}</span>
+      </div>
+
+      <h3 class="mobile-ticket-title">{{ ticket.title }}</h3>
+      <p class="mobile-ticket-desc" *ngIf="ticket.description">{{ ticket.description }}</p>
+
+      <div class="mobile-card-bottom">
+        <div class="mobile-badges">
+          <span class="badge" [ngClass]="'status-' + ticket.status.toLowerCase()">
+            {{ ticket.status === 'IN_PROGRESS' ? 'In Progress' : ticket.status }}
+          </span>
+          <span class="badge" [ngClass]="'priority-' + ticket.priority.toLowerCase()">
+            {{ ticket.priority }}
+          </span>
+          <span class="badge badge-category" *ngIf="ticket.category">
+            🤖 {{ ticket.category }}
+          </span>
+        </div>
+        <span class="mobile-view-link">View →</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination / Count Footer -->
+  <div class="table-footer" *ngIf="!isLoading && tickets.length > 0">
+    <span>Showing <strong>{{ filteredTickets.length }}</strong> of <strong>{{ tickets.length }}</strong> tickets</span>
+  </div>
+</div>

@@ -1,0 +1,21 @@
+# Node / Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/.vscode/
+
+# Python / AI Service
+ai-service/venv/
+ai-service/__pycache__/
+ai-service/*.pyc
+ai-service/.env
+
+# Java / Backend
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+backend/.idea/
+backend/*.iml
+
+# System / OS files
+.DS_Store
+Thumbs.db
