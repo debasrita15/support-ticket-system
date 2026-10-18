@@ -1,4 +1,8 @@
 # 🎫 AI-Powered Support Ticket System
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.4.3-green.svg)](https://spring.io/projects/spring-boot)
+[![Angular](https://img.shields.io/badge/Angular-19-red.svg)](https://angular.dev/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-teal.svg)](https://fastapi.tiangolo.com/)
 
 An enterprise-grade, end-to-end full-stack support ticket management platform with automated AI issue classification, dynamic priority scoring, and smart resolution suggestions powered by Groq LLM.
 
@@ -193,8 +197,10 @@ npm start
 
 | Role | Email | Password | Permissions |
 |---|---|---|---|
-| **Regular User** | `alice@example.com` | `password123` | Create tickets, view personal tickets, view AI replies |
-| **Administrator** | `bob@example.com` | `password123` | Access Admin Panel, view all tickets, update ticket statuses |
+| **Administrator** | `dasdebasrita796@gmail.com` | `123456` | Access Admin Portal (`/admin`), view all tickets, update statuses inline |
+| **Regular User** | `alice@example.com` | `password123` | Create tickets, view personal tickets, receive AI suggestions |
+
+> **Note:** These credentials are provided for local development, evaluation, and demonstration purposes.
 
 ---
 
@@ -241,3 +247,16 @@ npm start
 5. **CORS Preflight Filtering**:
    - *Problem:* Browser OPTIONS requests from `localhost:4200` to `localhost:8080` were blocked.
    - *Fix:* Configured `CorsConfigurationSource` in Spring Security allowing all REST methods and headers.
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 👩‍💻 Author
+
+**Debasrita Das**  
+- GitHub: [@debasrita15](https://github.com/debasrita15)
