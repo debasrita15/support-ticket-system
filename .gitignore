@@ -19,3 +19,8 @@ backend/*.iml
 # System / OS files
 .DS_Store
 Thumbs.db
+.neon
+node_modules/
+.env.local
+.env
+
